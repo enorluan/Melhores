@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Melhores Amigos ✦</title>
+<style>
+  :root {
+    --green: #3fd16a;
+    --green-glow: rgba(63, 209, 106, 0.30);
+    --dark: #0a0a0a;
+    --card: #111111;
+    --border: rgba(255,255,255,0.07);
+    --text: #f0f0f0;
+    --muted: #777;
+  }
+
+- { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+background: var(–dark);
+color: var(–text);
+font-family: -apple-system, BlinkMacSystemFont, ‘Helvetica Neue’, Arial, sans-serif;
+min-height: 100vh;
+display: flex;
+flex-direction: column;
+align-items: center;
+padding: 36px 16px 80px;
+position: relative;
+overflow-x: hidden;
+}
+
+body::before {
+content: ‘’;
+position: fixed;
+top: -200px; left: 50%; transform: translateX(-50%);
+width: 500px; height: 500px;
+background: radial-gradient(circle, var(–green-glow) 0%, transparent 70%);
+pointer-events: none;
+z-index: 0;
+}
+
+header {
+text-align: center;
+margin-bottom: 40px;
+position: relative;
+z-index: 1;
+}
+
+.badge {
+display: inline-flex;
+align-items: center;
+gap: 6px;
+background: rgba(63,209,106,0.1);
+border: 1px solid rgba(63,209,106,0.3);
+color: var(–green);
+font-size: 11px;
+font-weight: 600;
+letter-spacing: 0.12em;
+text-transform: uppercase;
+padding: 5px 12px;
+border-radius: 100px;
+margin-bottom: 18px;
+}
+
+h1 {
+font-size: clamp(30px, 7vw, 52px);
+font-weight: 800;
+line-height: 1.05;
+letter-spacing: -0.025em;
+}
+
+h1 span { color: var(–green); }
+
+.subtitle {
+color: var(–muted);
+font-size: 14px;
+margin-top: 10px;
+}
+
+.grid {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 14px;
+width: 100%;
+max-width: 820px;
+position: relative;
+z-index: 1;
+}
+
+@media (max-width: 580px) {
+.grid { grid-template-columns: 1fr; }
+}
+
+.card {
+background: var(–card);
+border: 1px solid var(–border);
+border-radius: 18px;
+padding: 22px;
+transition: border-color 0.2s;
+}
+
+.card:hover { border-color: rgba(63,209,106,0.18); }
+
+.card-title {
+font-size: 11px;
+font-weight: 700;
+letter-spacing: 0.1em;
+text-transform: uppercase;
+color: var(–muted);
+margin-bottom: 16px;
+display: flex;
+align-items: center;
+gap: 8px;
+}
+
+.card-title .num {
+width: 20px; height: 20px;
+background: rgba(63,209,106,0.12);
+color: var(–green);
+border-radius: 6px;
+display: flex; align-items: center; justify-content: center;
+font-size: 11px; font-weight: 700;
+}
+
+.drop-zone {
+border: 1.5px dashed rgba(255,255,255,0.1);
+border-radius: 12px;
+padding: 28px 16px;
+text-align: center;
+cursor: pointer;
+transition: all 0.2s;
+position: relative;
+background: rgba(255,255,255,0.02);
+}
+
+.drop-zone:hover, .drop-zone.drag-over {
+border-color: var(–green);
+background: rgba(63,209,106,0.04);
+}
+
+.drop-zone input[type=“file”] {
+position: absolute; inset: 0;
+opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+
+.drop-icon { font-size: 28px; margin-bottom: 10px; display: block; }
+.drop-label { font-size: 13px; color: var(–muted); line-height: 1.5; }
+.drop-label strong { color: var(–text); }
+
+.preview-wrap {
+margin-top: 14px;
+border-radius: 10px;
+overflow: hidden;
+background: #000;
+display: none;
+position: relative;
+max-height: 180px;
+}
+
+.preview-wrap img, .preview-wrap video {
+width: 100%; max-height: 180px;
+object-fit: contain; display: block;
+}
+
+.preview-tag {
+position: absolute; top: 7px; right: 7px;
+background: rgba(0,0,0,0.7); color: var(–green);
+font-size: 9px; font-weight: 700;
+letter-spacing: 0.08em; text-transform: uppercase;
+padding: 3px 7px; border-radius: 5px;
+}
+
+.options-card { grid-column: 1 / -1; }
+
+.options-grid {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 20px;
+}
+
+@media (max-width: 480px) {
+.options-grid { grid-template-columns: 1fr; }
+}
+
+label.opt-label {
+display: block;
+font-size: 11px; color: var(–muted); font-weight: 600;
+margin-bottom: 8px; letter-spacing: 0.06em; text-transform: uppercase;
+}
+
+.pos-info {
+background: rgba(63,209,106,0.07);
+border: 1px solid rgba(63,209,106,0.18);
+border-radius: 10px;
+padding: 10px 14px;
+font-size: 12px;
+color: rgba(63,209,106,0.9);
+display: flex;
+align-items: flex-start;
+gap: 8px;
+margin-bottom: 16px;
+line-height: 1.5;
+}
+
+/* Grid de posição 3x3 */
+.pos-grid {
+display: grid;
+grid-template-columns: repeat(3, 1fr);
+grid-template-rows: repeat(3, 1fr);
+gap: 5px;
+aspect-ratio: 1;
+max-width: 140px;
+}
+
+.pos-btn {
+border-radius: 7px;
+border: 1.5px solid rgba(255,255,255,0.08);
+background: rgba(255,255,255,0.03);
+cursor: pointer;
+display: flex; align-items: center; justify-content: center;
+font-size: 13px;
+transition: all 0.15s;
+color: var(–muted);
+padding: 0;
+aspect-ratio: 1;
+}
+
+.pos-btn:hover { border-color: rgba(63,209,106,0.4); background: rgba(63,209,106,0.06); }
+.pos-btn.active { border-color: var(–green); background: rgba(63,209,106,0.14); color: var(–green); }
+.pos-empty { aspect-ratio: 1; }
+
+input[type=“range”] {
+width: 100%; cursor: pointer; accent-color: var(–green);
+}
+
+.range-row { display: flex; align-items: center; gap: 10px; }
+.range-val { font-size: 13px; font-weight: 700; color: var(–green); min-width: 40px; text-align: right; }
+
+.preview-card { grid-column: 1 / -1; }
+
+#canvas-wrap {
+border-radius: 12px; overflow: hidden; background: #000;
+display: flex; align-items: center; justify-content: center;
+min-height: 240px;
+}
+
+#mainCanvas { max-width: 100%; max-height: 460px; display: block; border-radius: 8px; }
+
+.canvas-placeholder {
+display: flex; flex-direction: column;
+align-items: center; gap: 10px;
+color: var(–muted); font-size: 13px;
+}
+
+.canvas-placeholder .icon { font-size: 36px; opacity: 0.2; }
+
+.btn-row { grid-column: 1 / -1; display: flex; gap: 10px; }
+
+.btn {
+flex: 1; padding: 15px 20px;
+border-radius: 12px; font-size: 14px; font-weight: 700;
+cursor: pointer; border: none;
+transition: all 0.2s; display: flex;
+align-items: center; justify-content: center; gap: 7px;
+}
+
+.btn-primary {
+background: var(–green); color: #000;
+box-shadow: 0 0 24px var(–green-glow);
+}
+
+.btn-primary:hover { box-shadow: 0 0 40px var(–green-glow); transform: translateY(-1px); }
+.btn-primary:disabled { opacity: 0.3; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.btn-secondary {
+background: rgba(255,255,255,0.05); color: var(–text);
+border: 1px solid var(–border);
+}
+
+.btn-secondary:hover { background: rgba(255,255,255,0.09); }
+.btn-secondary:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.toast {
+position: fixed; bottom: 28px; left: 50%;
+transform: translateX(-50%) translateY(70px);
+background: var(–green); color: #000;
+font-size: 13px; font-weight: 700; padding: 12px 22px;
+border-radius: 100px; opacity: 0;
+transition: all 0.3s cubic-bezier(.34,1.56,.64,1);
+z-index: 100; white-space: nowrap;
+}
+
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+#videoProgress {
+display: none; margin-top: 10px;
+font-size: 12px; color: var(–muted); text-align: center;
+}
+
+.progress-bar { height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; margin-top: 7px; }
+.progress-fill { height: 100%; background: var(–green); width: 0%; transition: width 0.1s linear; }
+</style>
+
+</head>
+<body>
+
+<header>
+  <div class="badge">✦ Para os chegados</div>
+  <h1>Melhores<br><span>Amigos</span></h1>
+  <p class="subtitle">Marca d'água em fotos e vídeos · Qualidade máxima</p>
+</header>
+
+<div class="grid">
+
+  <div class="card">
+    <div class="card-title"><span class="num">1</span> Sua logo / ícone</div>
+    <div class="drop-zone" id="dropLogo">
+      <input type="file" id="logoInput" accept="image/*">
+      <span class="drop-icon">⬡</span>
+      <p class="drop-label"><strong>Toque para escolher</strong><br>PNG transparente<br>recomendado</p>
+    </div>
+    <div class="preview-wrap" id="logoPreview">
+      <img id="logoImg" src="" alt="Logo">
+      <span class="preview-tag">Logo</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="num">2</span> Foto ou vídeo</div>
+    <div class="drop-zone" id="dropMedia">
+      <input type="file" id="mediaInput" accept="image/*,video/*">
+      <span class="drop-icon">◈</span>
+      <p class="drop-label"><strong>Toque para escolher</strong><br>Foto ou vídeo<br>em qualquer formato</p>
+    </div>
+    <div class="preview-wrap" id="mediaPreview">
+      <img id="mediaImg" src="" alt="Mídia" style="display:none">
+      <video id="mediaVideo" muted playsinline style="display:none"></video>
+      <span class="preview-tag" id="mediaTag"></span>
+    </div>
+  </div>
+
+  <div class="card options-card">
+    <div class="card-title"><span class="num">3</span> Personalizar</div>
+
+```
+<div class="pos-info">
+  📍 Padrão: <strong style="margin-left:4px">canto superior direito</strong>, igual ao Instagram. Clique no grid para mudar.
+</div>
+
+<div class="options-grid">
+  <div>
+    <label class="opt-label">Posição</label>
+    <div class="pos-grid" id="posGrid">
+      <button class="pos-btn" data-pos="top-left">↖</button>
+      <div class="pos-empty"></div>
+      <button class="pos-btn active" data-pos="top-right">↗</button>
+      <div class="pos-empty"></div>
+      <button class="pos-btn" data-pos="center">✦</button>
+      <div class="pos-empty"></div>
+      <button class="pos-btn" data-pos="bottom-left">↙</button>
+      <div class="pos-empty"></div>
+      <button class="pos-btn" data-pos="bottom-right">↘</button>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:18px;">
+    <div>
+      <label class="opt-label">Tamanho da logo</label>
+      <div class="range-row">
+        <input type="range" id="sizeRange" min="5" max="40" value="14">
+        <span class="range-val" id="sizeVal">14%</span>
+      </div>
+    </div>
+    <div>
+      <label class="opt-label">Opacidade</label>
+      <div class="range-row">
+        <input type="range" id="opacityRange" min="10" max="100" value="90">
+        <span class="range-val" id="opacityVal">90%</span>
+      </div>
+    </div>
+    <div>
+      <label class="opt-label">Margem da borda</label>
+      <div class="range-row">
+        <input type="range" id="marginRange" min="0" max="80" value="20">
+        <span class="range-val" id="marginVal">20px</span>
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+  </div>
+
+  <div class="card preview-card">
+    <div class="card-title"><span class="num">4</span> Preview em tempo real</div>
+    <div id="canvas-wrap">
+      <div class="canvas-placeholder" id="placeholder">
+        <span class="icon">◈</span>
+        <span>Faça upload dos arquivos para ver o preview</span>
+      </div>
+      <canvas id="mainCanvas" style="display:none"></canvas>
+    </div>
+    <div id="videoProgress">
+      <span id="progressText">Processando vídeo...</span>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" id="previewBtn" disabled onclick="renderPreview()">↺ Atualizar</button>
+    <button class="btn btn-primary" id="downloadBtn" disabled onclick="download()">↓ Baixar em HD</button>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let logoImage = null;
+  let mediaElement = null;
+  let mediaIsVideo = false;
+  let currentPos = 'top-right';
+
+  const canvas = document.getElementById('mainCanvas');
+  const ctx = canvas.getContext('2d');
+  const previewBtn = document.getElementById('previewBtn');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const sizeRange = document.getElementById('sizeRange');
+  const opacityRange = document.getElementById('opacityRange');
+  const marginRange = document.getElementById('marginRange');
+
+  sizeRange.oninput = () => { document.getElementById('sizeVal').textContent = sizeRange.value + '%'; autoPreview(); };
+  opacityRange.oninput = () => { document.getElementById('opacityVal').textContent = opacityRange.value + '%'; autoPreview(); };
+  marginRange.oninput = () => { document.getElementById('marginVal').textContent = marginRange.value + 'px'; autoPreview(); };
+
+  document.getElementById('posGrid').addEventListener('click', e => {
+    const btn = e.target.closest('.pos-btn');
+    if (!btn) return;
+    document.querySelectorAll('.pos-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentPos = btn.dataset.pos;
+    autoPreview();
+  });
+
+  ['dropLogo','dropMedia'].forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag-over'); });
+    el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+    el.addEventListener('drop', e => { e.preventDefault(); el.classList.remove('drag-over'); });
+  });
+
+  document.getElementById('logoInput').onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      logoImage = img;
+      document.getElementById('logoImg').src = url;
+      document.getElementById('logoPreview').style.display = 'block';
+      checkReady(); autoPreview();
+    };
+    img.src = url;
+  };
+
+  document.getElementById('mediaInput').onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    mediaIsVideo = file.type.startsWith('video/');
+    const url = URL.createObjectURL(file);
+    const imgEl = document.getElementById('mediaImg');
+    const vidEl = document.getElementById('mediaVideo');
+    document.getElementById('mediaPreview').style.display = 'block';
+
+    if (mediaIsVideo) {
+      imgEl.style.display = 'none'; vidEl.style.display = 'block';
+      vidEl.src = url; vidEl.load();
+      vidEl.onloadeddata = () => {
+        mediaElement = vidEl;
+        document.getElementById('mediaTag').textContent = 'Vídeo';
+        checkReady(); autoPreview();
+      };
+    } else {
+      vidEl.style.display = 'none'; imgEl.style.display = 'block';
+      const img = new Image();
+      img.onload = () => {
+        imgEl.src = url; mediaElement = img;
+        document.getElementById('mediaTag').textContent = 'Foto';
+        checkReady(); autoPreview();
+      };
+      img.src = url;
+    }
+  };
+
+  function checkReady() {
+    const ok = logoImage && mediaElement;
+    previewBtn.disabled = !ok;
+    downloadBtn.disabled = !ok;
+  }
+
+  function calcLogoSize(canvasW, canvasH) {
+    // Tamanho baseado na menor dimensão (igual ao comportamento do Instagram)
+    const base = Math.min(canvasW, canvasH);
+    const pct = parseInt(sizeRange.value) / 100;
+    const logoW = Math.round(base * pct);
+    const logoH = Math.round((logoImage.height / logoImage.width) * logoW);
+    return { logoW, logoH };
+  }
+
+  function getCoords(canvasW, canvasH, logoW, logoH) {
+    // Margem escala com a resolução para não sumir em imagens grandes
+    const scale = Math.min(canvasW, canvasH) / 400;
+    const m = Math.round(parseInt(marginRange.value) * Math.max(1, scale));
+    switch(currentPos) {
+      case 'top-right':    return { x: canvasW - logoW - m, y: m };
+      case 'top-left':     return { x: m, y: m };
+      case 'bottom-right': return { x: canvasW - logoW - m, y: canvasH - logoH - m };
+      case 'bottom-left':  return { x: m, y: canvasH - logoH - m };
+      case 'center':       return { x: (canvasW - logoW)/2, y: (canvasH - logoH)/2 };
+      default:             return { x: canvasW - logoW - m, y: m };
+    }
+  }
+
+  function drawWatermark(w, h, targetCtx) {
+    const c = targetCtx || ctx;
+    const { logoW, logoH } = calcLogoSize(w, h);
+    const { x, y } = getCoords(w, h, logoW, logoH);
+    c.save();
+    c.globalAlpha = parseInt(opacityRange.value) / 100;
+    c.drawImage(logoImage, x, y, logoW, logoH);
+    c.restore();
+  }
+
+  function autoPreview() {
+    if (logoImage && mediaElement) renderPreview();
+  }
+
+  function renderPreview() {
+    if (!logoImage || !mediaElement) return;
+    document.getElementById('placeholder').style.display = 'none';
+    canvas.style.display = 'block';
+
+    if (mediaIsVideo) {
+      const vid = mediaElement;
+      canvas.width = vid.videoWidth || 640;
+      canvas.height = vid.videoHeight || 360;
+      vid.currentTime = vid.currentTime > 0 ? vid.currentTime : 0.5;
+      vid.onseeked = () => {
+        ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
+        drawWatermark(canvas.width, canvas.height);
+      };
+    } else {
+      canvas.width = mediaElement.naturalWidth;
+      canvas.height = mediaElement.naturalHeight;
+      ctx.drawImage(mediaElement, 0, 0);
+      drawWatermark(canvas.width, canvas.height);
+    }
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  async function download() {
+    if (!logoImage || !mediaElement) return;
+    if (!mediaIsVideo) {
+      renderPreview();
+      setTimeout(() => {
+        canvas.toBlob(blob => {
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'melhores-amigos.png';
+          a.click();
+          showToast('✦ Foto salva em HD!');
+        }, 'image/png');
+      }, 120);
+    } else {
+      await processVideo();
+    }
+  }
+
+  async function processVideo() {
+    const vid = mediaElement;
+    const progressDiv = document.getElementById('videoProgress');
+    const progressText = document.getElementById('progressText');
+    const progressFill = document.getElementById('progressFill');
+    downloadBtn.disabled = true;
+    progressDiv.style.display = 'block';
+
+    const off = document.createElement('canvas');
+    off.width = vid.videoWidth;
+    off.height = vid.videoHeight;
+    const offCtx = off.getContext('2d');
+
+    const stream = off.captureStream();
+    let finalStream = stream;
+    try {
+      const audioCtx = new AudioContext();
+      const src = audioCtx.createMediaElementSource(vid);
+      const dest = audioCtx.createMediaStreamDestination();
+      src.connect(dest); src.connect(audioCtx.destination);
+      const at = dest.stream.getAudioTracks()[0];
+      if (at) finalStream = new MediaStream([...stream.getTracks(), at]);
+    } catch(e) {}
+
+    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+      ? 'video/webm;codecs=vp9' : 'video/webm';
+
+    const recorder = new MediaRecorder(finalStream, { mimeType, videoBitsPerSecond: 8_000_000 });
+    const chunks = [];
+    recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+    recorder.onstop = () => {
+      const blob = new Blob(chunks, { type: mimeType });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'melhores-amigos.webm';
+      a.click();
+      progressDiv.style.display = 'none';
+      downloadBtn.disabled = false;
+      showToast('✦ Vídeo salvo em HD!');
+    };
+
+    vid.currentTime = 0;
+    await new Promise(r => { vid.onseeked = r; });
+    recorder.start();
+    vid.play();
+
+    const duration = vid.duration;
+    const interval = setInterval(() => {
+      if (vid.ended || vid.currentTime >= duration) {
+        clearInterval(interval);
+        recorder.stop(); vid.pause(); return;
+      }
+      const pct = (vid.currentTime / duration * 100).toFixed(0);
+      progressFill.style.width = pct + '%';
+      progressText.textContent = `Processando vídeo... ${pct}%`;
+      offCtx.drawImage(vid, 0, 0, off.width, off.height);
+      drawWatermark(off.width, off.height, offCtx);
+    }, 1000 / 30);
+  }
+</script>
+
+</body>
+</html>
