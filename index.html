@@ -5,6 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Melhores Amigos ✦</title>
+<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
 <style>
   :root {
     --green: #3fd16a;
@@ -590,58 +591,98 @@ font-size: 12px; color: var(–muted); text-align: center;
     const progressText = document.getElementById('progressText');
     const progressFill = document.getElementById('progressFill');
     downloadBtn.disabled = true;
+    previewBtn.disabled = true;
     progressDiv.style.display = 'block';
+    progressText.textContent = 'Carregando processador de vídeo...';
+    progressFill.style.width = '5%';
 
-    const off = document.createElement('canvas');
-    off.width = vid.videoWidth;
-    off.height = vid.videoHeight;
-    const offCtx = off.getContext('2d');
-
-    const stream = off.captureStream();
-    let finalStream = stream;
     try {
-      const audioCtx = new AudioContext();
-      const src = audioCtx.createMediaElementSource(vid);
-      const dest = audioCtx.createMediaStreamDestination();
-      src.connect(dest); src.connect(audioCtx.destination);
-      const at = dest.stream.getAudioTracks()[0];
-      if (at) finalStream = new MediaStream([...stream.getTracks(), at]);
-    } catch(e) {}
+      // Carrega FFmpeg.wasm (roda 100% no navegador, sem servidor)
+      const { createFFmpeg, fetchFile } = FFmpeg;
+      const ffmpeg = createFFmpeg({
+        log: false,
+        progress: ({ ratio }) => {
+          const pct = Math.round(ratio * 100);
+          progressFill.style.width = Math.max(10, pct) + '%';
+          progressText.textContent = `Processando vídeo... ${pct}%`;
+        }
+      });
 
-    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
-      ? 'video/webm;codecs=vp9' : 'video/webm';
+      progressText.textContent = 'Iniciando FFmpeg...';
+      await ffmpeg.load();
 
-    const recorder = new MediaRecorder(finalStream, { mimeType, videoBitsPerSecond: 8_000_000 });
-    const chunks = [];
-    recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
-    recorder.onstop = () => {
-      const blob = new Blob(chunks, { type: mimeType });
+      // 1. Escreve o vídeo original no sistema de arquivos virtual do FFmpeg
+      progressText.textContent = 'Lendo vídeo original...';
+      progressFill.style.width = '10%';
+      const videoFile = await fetchFile(vid.src);
+      ffmpeg.FS('writeFile', 'input.mp4', videoFile);
+
+      // 2. Extrai frames, aplica watermark em canvas, gera sequência de PNGs
+      progressText.textContent = 'Aplicando marca d\'água nos frames...';
+      const fps = 30;
+      const duration = vid.duration;
+      const totalFrames = Math.ceil(duration * fps);
+
+      const off = document.createElement('canvas');
+      off.width = vid.videoWidth;
+      off.height = vid.videoHeight;
+      const offCtx = off.getContext('2d');
+
+      // Extrai cada frame
+      for (let i = 0; i < totalFrames; i++) {
+        const t = i / fps;
+        vid.currentTime = t;
+        await new Promise(r => { vid.onseeked = r; });
+        offCtx.drawImage(vid, 0, 0, off.width, off.height);
+        drawWatermark(off.width, off.height, offCtx);
+
+        // Converte frame para PNG e salva no FS virtual
+        const pngData = await new Promise(resolve => {
+          off.toBlob(blob => {
+            blob.arrayBuffer().then(buf => resolve(new Uint8Array(buf)));
+          }, 'image/png');
+        });
+        ffmpeg.FS('writeFile', `frame${String(i).padStart(6,'0')}.png`, pngData);
+
+        const pct = Math.round((i / totalFrames) * 70) + 10;
+        progressFill.style.width = pct + '%';
+        progressText.textContent = `Extraindo frames... ${i+1}/${totalFrames}`;
+      }
+
+      // 3. Monta o vídeo final em MP4
+      progressText.textContent = 'Gerando MP4...';
+      progressFill.style.width = '85%';
+      await ffmpeg.run(
+        '-framerate', String(fps),
+        '-i', 'frame%06d.png',
+        '-c:v', 'libx264',
+        '-pix_fmt', 'yuv420p',
+        '-crf', '18',
+        'output.mp4'
+      );
+
+      progressFill.style.width = '98%';
+      progressText.textContent = 'Finalizando...';
+
+      const data = ffmpeg.FS('readFile', 'output.mp4');
+      const blob = new Blob([data.buffer], { type: 'video/mp4' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'melhores-amigos.webm';
+      a.download = 'melhores-amigos.mp4';
       a.click();
+
       progressDiv.style.display = 'none';
       downloadBtn.disabled = false;
-      showToast('✦ Vídeo salvo em HD!');
-    };
+      previewBtn.disabled = false;
+      showToast('✦ Vídeo salvo em MP4!');
 
-    vid.currentTime = 0;
-    await new Promise(r => { vid.onseeked = r; });
-    recorder.start();
-    vid.play();
-
-    const duration = vid.duration;
-    const interval = setInterval(() => {
-      if (vid.ended || vid.currentTime >= duration) {
-        clearInterval(interval);
-        recorder.stop(); vid.pause(); return;
-      }
-      const pct = (vid.currentTime / duration * 100).toFixed(0);
-      progressFill.style.width = pct + '%';
-      progressText.textContent = `Processando vídeo... ${pct}%`;
-      offCtx.drawImage(vid, 0, 0, off.width, off.height);
-      drawWatermark(off.width, off.height, offCtx);
-    }, 1000 / 30);
+    } catch(err) {
+      console.error(err);
+      progressText.textContent = '⚠️ Erro ao processar. Tente com um vídeo menor.';
+      progressFill.style.width = '0%';
+      downloadBtn.disabled = false;
+      previewBtn.disabled = false;
+    }
   }
 </script>
 
